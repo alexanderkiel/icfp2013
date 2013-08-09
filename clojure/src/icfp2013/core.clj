@@ -1,7 +1,7 @@
 (ns icfp2013.core
   (:require [clojure.tools.namespace.repl :refer (refresh)]
             [clojure.pprint :refer (pprint)]
-            [icfp2013.util :refer (to-hex from-hex gen-inputs)]
+            [icfp2013.util :refer (to-hex to-bin from-hex gen-inputs)]
             [icfp2013.client :as c]
             [icfp2013.problems :as problems]
             [icfp2013.program :as p]
