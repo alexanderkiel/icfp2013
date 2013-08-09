@@ -1,14 +1,15 @@
 (ns icfp2013.eval
   (:require [clojure.tools.namespace.repl :refer (refresh)]
             [clojure.pprint :refer (pprint)])
+  (:import [icfp2013.util UnsignedMath])
   (:refer-clojure :exclude [not or and]))
 
 ;; op1
 (def not clojure.core/bit-not)
 (def shl1 #(bit-shift-left %1 1))
-(def shr1 #(bit-shift-right %1 1))
-(def shr4 #(bit-shift-right %1 4))
-(def shr16 #(bit-shift-right %1 16))
+(def shr1 #(UnsignedMath/unsignedBitShiftRight %1 1))
+(def shr4 #(UnsignedMath/unsignedBitShiftRight %1 4))
+(def shr16 #(UnsignedMath/unsignedBitShiftRight %1 16))
 
 ;; op2
 (def or clojure.core/bit-or)
