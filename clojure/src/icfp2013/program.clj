@@ -2,7 +2,7 @@
   (:import [icfp2013.generator ProgramGenerator]
            [icfp2013.generator.syntax Operators]
            [java.util Random])
-  (:refer-clojure :exclude [eval not or and]))
+  (:refer-clojure :exclude [read not or and]))
 
 (def not (Operators/NOT))
 (def shl1 (Operators/SHL1))
@@ -27,8 +27,7 @@
 (defn op [program]
   (.op program))
 
-(defn eval [program]
+(defn read [program]
   (-> program
     (.toString)
-    (read-string)
-    (clojure.core/eval)))
+    (read-string)))
