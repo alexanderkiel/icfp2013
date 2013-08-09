@@ -1,5 +1,7 @@
 package icfp2013.generator.syntax;
 
+import java.util.Set;
+
 import static java.lang.String.format;
 
 /**
@@ -25,6 +27,14 @@ public class Program {
         if (!x.equals(program.x)) return false;
 
         return true;
+    }
+
+    public Set<Operators> op() {
+        return e.op();
+    }
+
+    public int size() {
+        return 1 + e.size();
     }
 
     @Override

@@ -1,6 +1,9 @@
 package icfp2013.generator.syntax;
 
+import java.util.Set;
+
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptySet;
 
 /**
  * @author <a href="mailto:jonas.wagner@life.uni-leipzig.de">Jonas Wagner</a>
@@ -19,5 +22,15 @@ class Constant implements Expression {
     @Override
     public String toString() {
         return value;
+    }
+
+    @Override
+    public Set<Operators> op() {
+        return emptySet();
+    }
+
+    @Override
+    public int size() {
+        return 1;
     }
 }

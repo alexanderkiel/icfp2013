@@ -1,19 +1,35 @@
 package icfp2013.generator.syntax;
 
+import com.google.common.collect.ImmutableSet;
+
+import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 
 /**
  * @author <a href="mailto:jonas.wagner@life.uni-leipzig.de">Jonas Wagner</a>
  */
-class Unary implements Operator {
+public class Unary implements Operator {
     public final Expression e;
 
-    private final String name;
+    private final Operators op;
 
-    protected Unary(String name, Expression e) {
+    public Unary(Operators op, Expression e) {
+        checkArgument(op.operatorSize == 1);
         this.e = checkNotNull(e);
-        this.name = checkNotNull(name);
+        this.op = checkNotNull(op);
+    }
+
+    @Override
+    public Set<Operators> op() {
+        return ImmutableSet.<Operators>builder().add(op).addAll(e.op()).build();
+    }
+
+    @Override
+    public int size() {
+        return 1 + e.size();
     }
 
     @Override
@@ -24,7 +40,7 @@ class Unary implements Operator {
         Unary unary = (Unary) o;
 
         if (!e.equals(unary.e)) return false;
-        if (!name.equals(unary.name)) return false;
+        if (!op.equals(unary.op)) return false;
 
         return true;
     }
@@ -32,12 +48,12 @@ class Unary implements Operator {
     @Override
     public int hashCode() {
         int result = e.hashCode();
-        result = 31 * result + name.hashCode();
+        result = 31 * result + op.hashCode();
         return result;
     }
 
     @Override
     public String toString() {
-        return format("(%s %s)", name, e.toString());
+        return format("(%s %s)", op.toString().toLowerCase(), e.toString());
     }
 }

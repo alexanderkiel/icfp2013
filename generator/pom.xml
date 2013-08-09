@@ -14,12 +14,41 @@
     </description>
     <inceptionYear>2013</inceptionYear>
 
+    <properties>
+        <life-util.version>0.28</life-util.version>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>life-snapshots</id>
+            <url>http://nexus.javadev.life.uni-leipzig.local/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <dependencies>
+
+        <dependency>
+            <groupId>de.uni-leipzig.life</groupId>
+            <artifactId>life-util</artifactId>
+            <version>${life-util.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>14.0.1</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
         </dependency>
     </dependencies>
 

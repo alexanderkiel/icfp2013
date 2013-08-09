@@ -1,6 +1,9 @@
 package icfp2013.generator.syntax;
 
+import java.util.Set;
+
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptySet;
 
 /**
  * @author <a href="mailto:jonas.wagner@life.uni-leipzig.de">Jonas Wagner</a>
@@ -10,6 +13,16 @@ public class Variable implements Expression {
 
     Variable(String name) {
         this.name = checkNotNull(name);
+    }
+
+    @Override
+    public Set<Operators> op() {
+        return emptySet();
+    }
+
+    @Override
+    public int size() {
+        return 1;
     }
 
     @Override
