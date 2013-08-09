@@ -1,4 +1,4 @@
-(ns problems.core
+(ns icfp2013.problems
   (:require [clj-http.client :as c]
             [clojure.data.json :as json]
             [clojure.tools.namespace.repl :refer (refresh)]

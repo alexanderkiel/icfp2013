@@ -3,4 +3,4 @@
                  [org.clojure/tools.namespace "0.2.4"]
                  [org.clojure/data.json "0.2.2"]
                  [clj-http "0.5.7"]]
-  :main problems.core)
+  :main icfp2013.core)
