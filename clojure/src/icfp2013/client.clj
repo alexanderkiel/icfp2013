@@ -4,16 +4,25 @@
             [icfp2013.util :refer (to-hex from-hex)])
   (:refer-clojure :exclude [eval]))
 
-(def uri "http://icfpc2013.cloudapp.net/eval?auth=0346eBiCRDFzfUqcEJSHQrAM2MvLPojl7V373Vs8vpsH1H")
+(defn uri [path]
+  (str "http://icfpc2013.cloudapp.net/" path "?auth=0346eBiCRDFzfUqcEJSHQrAM2MvLPojl7V373Vs8vpsH1H"))
 
 (defn eval
-  "Posts the given numeric arguments to the server returning a coll of numeric outputs."
+  "Posts the id and numeric arguments returning a coll of numeric outputs."
   [id args]
-  (->> (c/post uri
+  (->> (c/post (uri "eval")
+         {:body (json/write-str {:id id
+                                 :arguments (map to-hex args)})
+          :content-type :json
+          :as :json})
+    :body :outputs (map from-hex)))
+
+(defn guess
+  "Posts the id and programm returning the body."
+  [id program]
+  (-> (c/post (uri "guess")
         {:body (json/write-str {:id id
-                                :arguments (map to-hex args)})
+                                :program program})
          :content-type :json
          :as :json})
-    :body :outputs
-    (map from-hex)))
-
+    :body ))
