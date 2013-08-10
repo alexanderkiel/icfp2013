@@ -55,11 +55,14 @@
           (guess id program))
         (throw+)))))
 
-(defn train [size]
+(defn train
+  ([size]
+    (train size []))
+  ([size operators]
   (try+
     (->> (c/post (uri "train")
            {:body (json/write-str {:size size
-                                   :operators []})
+                                   :operators operators})
             :content-type :json
             :as :json})
       :body )
@@ -68,4 +71,15 @@
         (do
           (sleep)
           (train size))
+        (throw+))))))
+
+(defn problems []
+  (try+
+    (-> (c/get (uri "myproblems") {:as :json})
+      :body )
+    (catch Object e
+      (if (= 429 (:status e))
+        (do
+          (sleep)
+          (problems))
         (throw+)))))

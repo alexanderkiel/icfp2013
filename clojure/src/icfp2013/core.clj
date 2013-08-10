@@ -36,15 +36,10 @@
         win-prog (.toString (:prog (first (drop-while #(> 1 (:fit %1)) progs))))]
     (assoc (c/guess id win-prog) :win-prog win-prog)))
 
-(defn train [size inputs]
-  (let [train-result (c/train size)
-        id (:id train-result)
-        challenge (:challenge train-result)
-        operators (->> (:operators train-result) (map (partial symbol "p")) (map eval))
+(defn solve [{:keys [id size operators]} inputs]
+  (let [operators (->> operators (map (partial symbol "p")) (map eval))
         outputs (c/eval id inputs)]
-    (println "challenge:" challenge "id:" id)
-    (merge {:id id
-            :challenge challenge}
+    (merge {:id id}
       (loop [inputs inputs
              outputs outputs]
         (let [result (gen-and-guess id operators size inputs outputs)]
@@ -54,3 +49,10 @@
               (recur (conj inputs (:input values)) (conj outputs (:output-challenge values))))
             result))))))
 
+(defn train
+  ([size inputs]
+    (train size [] inputs))
+  ([size operators inputs]
+  (let [train-result (c/train size operators)]
+    (println "challenge:" (:challenge train-result) "id:" (:id train-result))
+    (solve train-result inputs))))

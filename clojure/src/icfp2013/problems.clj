@@ -1,16 +1,7 @@
 (ns icfp2013.problems
-  (:require [clj-http.client :as c]
-            [clojure.data.json :as json]))
+  (:require [icfp2013.client :as c]))
 
-(def uri "http://icfpc2013.cloudapp.net/myproblems?auth=0346eBiCRDFzfUqcEJSHQrAM2MvLPojl7V373Vs8vpsH1H")
-
-(defn fetch-problems []
-  (-> uri
-    c/get
-    :body
-    (json/read-str :key-fn keyword)))
-
-(def problems (memoize fetch-problems))
+(def problems c/problems)
 
 (defn open? [problem]
   (not (:solved problem)))
