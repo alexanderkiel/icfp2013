@@ -24,6 +24,18 @@
 
 (def inputs (gen-inputs))
 
+(defn gen-and-fit [operators size inputs outputs]
+  (let [prog (p/gen (vec operators) size)
+        fit (fit (p/eval prog) inputs outputs)]
+    (println "candiate prog:" (.toString prog) "fit:" fit)
+    {:prog prog
+     :fit fit}))
+
+(defn gen-and-guess [id operators size inputs outputs]
+  (let [progs (repeatedly #(gen-and-fit operators size inputs outputs))
+        win-prog (.toString (:prog (first (drop-while #(> 1 (:fit %1)) progs))))]
+    (assoc (c/guess id win-prog) :win-prog win-prog)))
+
 (defn train [size inputs]
   (let [train-result (c/train size)
         id (:id train-result)
@@ -31,14 +43,14 @@
         operators (->> (:operators train-result) (map (partial symbol "p")) (map eval))
         outputs (c/eval id inputs)]
     (println "challenge:" challenge "id:" id)
-    (let [progs (repeatedly #(let [prog (p/gen (vec operators) size)
-                                   fit (fit (p/eval prog) inputs outputs)]
-                               (println "candiate prog:" (.toString prog) "fit:" fit)
-                               {:prog prog
-                                :fit fit}))
-          win-prog (.toString (:prog (first (drop-while #(> 1 (:fit %1)) progs))))]
-      (merge {:id id
-              :challenge challenge
-              :win-prog win-prog}
-        (c/guess id win-prog)))))
+    (merge {:id id
+            :challenge challenge}
+      (loop [inputs inputs
+             outputs outputs]
+        (let [result (gen-and-guess id operators size inputs outputs)]
+          (if-let [values (:values result)]
+            (do
+              (println values)
+              (recur (conj inputs (:input values)) (conj outputs (:output-challenge values))))
+            result))))))
 
