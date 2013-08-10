@@ -1,11 +1,17 @@
 (ns icfp2013.client
   (:require [clj-http.client :as c]
             [clojure.data.json :as json]
+            [slingshot.slingshot :refer (try+ throw+)]
             [icfp2013.util :refer (to-hex from-hex)])
   (:refer-clojure :exclude [eval]))
 
 (defn uri [path]
   (str "http://icfpc2013.cloudapp.net/" path "?auth=0346eBiCRDFzfUqcEJSHQrAM2MvLPojl7V373Vs8vpsH1H"))
+
+(defn sleep []
+  (println "Got a 429 - sleep for 4s...")
+  (Thread/sleep 4000)
+  (println "Try again..."))
 
 (defn eval
   "Posts the id and numeric arguments returning a coll of numeric outputs."
@@ -28,17 +34,28 @@
 (defn guess
   "Posts the id and programm returning the body."
   [id program]
-  (-> (c/post (uri "guess")
-        {:body (json/write-str {:id id
-                                :program program})
-         :content-type :json
-         :as :json})
-    :body transform-guess-values))
+  (try+
+    (-> (c/post (uri "guess")
+          {:body (json/write-str {:id id
+                                  :program program})
+           :content-type :json
+           :as :json})
+      :body transform-guess-values)
+    (catch Object e
+      (if (= 429 (:status e))
+        (do
+          (sleep)
+          (guess id program))
+        (throw+)))))
 
 (defn train [size]
-  (->> (c/post (uri "train")
-         {:body (json/write-str {:size size
-                                 :operators []})
-          :content-type :json
-          :as :json})
-    :body ))
+  (try+
+    (->> (c/post (uri "train")
+           {:body (json/write-str {:size size
+                                   :operators []})
+            :content-type :json
+            :as :json})
+      :body )
+    (catch Object o
+      (println "Train Error: " o)
+      (throw+))))
