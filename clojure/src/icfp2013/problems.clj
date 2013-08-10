@@ -12,5 +12,10 @@
 
 (def problems (memoize fetch-problems))
 
+(defn open? [problem]
+  (not (:solved problem)))
+
 (defn w-size [size]
-  (->> (problems) (filter #(= (:size %1) size))))
+  (->> (problems)
+    (filter open?)
+    (filter #(= (:size %1) size))))
