@@ -5,7 +5,11 @@ package icfp2013.util;
  */
 public class UnsignedMath {
 
-    public static long unsignedBitShiftRight(long x, int n) {
+    public static long bitShiftRight(long x, int n) {
         return x >>> n;
+    }
+
+    public static long plus(long x, long y) {
+        return x + y;
     }
 }

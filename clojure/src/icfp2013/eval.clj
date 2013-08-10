@@ -7,15 +7,15 @@
 ;; op1
 (def not clojure.core/bit-not)
 (def shl1 #(bit-shift-left %1 1))
-(def shr1 #(UnsignedMath/unsignedBitShiftRight %1 1))
-(def shr4 #(UnsignedMath/unsignedBitShiftRight %1 4))
-(def shr16 #(UnsignedMath/unsignedBitShiftRight %1 16))
+(def shr1 #(UnsignedMath/bitShiftRight %1 1))
+(def shr4 #(UnsignedMath/bitShiftRight %1 4))
+(def shr16 #(UnsignedMath/bitShiftRight %1 16))
 
 ;; op2
 (def or clojure.core/bit-or)
 (def and clojure.core/bit-and)
 (def xor clojure.core/bit-xor)
-(def plus +)
+(defn plus [x y] (UnsignedMath/plus x y))
 
 (defn if0 [x then else]
   (if (= 0 x) then else))
