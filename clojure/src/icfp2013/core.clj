@@ -27,7 +27,7 @@
 (defn gen-and-fit [operators size inputs outputs]
   (let [prog (p/gen (vec operators) size)
         fit (fit (p/eval prog) inputs outputs)]
-    (println "candiate prog:" (.toString prog) "fit:" fit)
+    (println "fit:" (format "%1.4f" (float fit)) "prog:" (.toString prog))
     {:prog prog
      :fit fit}))
 
