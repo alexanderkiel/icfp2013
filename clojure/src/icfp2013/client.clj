@@ -20,9 +20,9 @@
 (defn- transform-guess-values [body]
   (if (:values body)
     (update-in body [:values ] (fn [values]
-                                 {:input (first values)
-                                  :output-challenge (second values)
-                                  :output-guess (nth values 2)}))
+                                 {:input (from-hex (first values))
+                                  :output-challenge (from-hex (second values))
+                                  :output-guess (from-hex (nth values 2))}))
     body))
 
 (defn guess
