@@ -2,6 +2,7 @@
   (:require [clojure.tools.namespace.repl :refer (refresh)]
             [clojure.string :as str]
             [clojure.pprint :refer (pprint)]
+            [clojure.repl :refer (pst)]
             [icfp2013.util :refer (to-hex to-bin from-hex gen-inputs bit-count)]
             [icfp2013.client :as c]
             [icfp2013.problems :as problems]
