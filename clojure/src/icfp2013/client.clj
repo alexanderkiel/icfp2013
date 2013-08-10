@@ -17,6 +17,14 @@
           :as :json})
     :body :outputs (map from-hex)))
 
+(defn- transform-guess-values [body]
+  (if (:values body)
+    (update-in body [:values ] (fn [values]
+                                 {:input (first values)
+                                  :output-challenge (second values)
+                                  :output-guess (nth values 2)}))
+    body))
+
 (defn guess
   "Posts the id and programm returning the body."
   [id program]
@@ -25,4 +33,12 @@
                                 :program program})
          :content-type :json
          :as :json})
+    :body transform-guess-values))
+
+(defn train [size]
+  (->> (c/post (uri "train")
+         {:body (json/write-str {:size size
+                                 :operators []})
+          :content-type :json
+          :as :json})
     :body ))

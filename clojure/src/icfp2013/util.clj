@@ -30,3 +30,14 @@
       three-bits-all-pos
       four-bits-all-pos
       [0 5 9 -1 one-zero-one-zero zero-one-zero-one])))
+
+(defn bit-count
+  "Counts the number of set bits in a 64-bit number."
+  [x]
+  (if (< x 0)
+    (+ (bit-count (bit-and x 0x7FFFFFFFFFFFFFFF)) 1)
+    (loop [x (long x)
+           c 0]
+      (if (= 0 x)
+        c
+        (recur (bit-and x (- x 1)) (+ c 1))))))
