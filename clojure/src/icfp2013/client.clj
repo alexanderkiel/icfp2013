@@ -16,12 +16,19 @@
 (defn eval
   "Posts the id and numeric arguments returning a coll of numeric outputs."
   [id args]
-  (->> (c/post (uri "eval")
-         {:body (json/write-str {:id id
-                                 :arguments (map to-hex args)})
-          :content-type :json
-          :as :json})
-    :body :outputs (map from-hex)))
+  (try+
+    (->> (c/post (uri "eval")
+           {:body (json/write-str {:id id
+                                   :arguments (map to-hex args)})
+            :content-type :json
+            :as :json})
+      :body :outputs (map from-hex))
+    (catch Object e
+      (if (= 429 (:status e))
+        (do
+          (sleep)
+          (eval id args))
+        (throw+)))))
 
 (defn- transform-guess-values [body]
   (if (:values body)
@@ -56,6 +63,9 @@
             :content-type :json
             :as :json})
       :body )
-    (catch Object o
-      (println "Train Error: " o)
-      (throw+))))
+    (catch Object e
+      (if (= 429 (:status e))
+        (do
+          (sleep)
+          (train size))
+        (throw+)))))
