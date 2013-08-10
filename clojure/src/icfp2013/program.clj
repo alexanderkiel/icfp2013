@@ -37,3 +37,12 @@
     (.toString)
     (read-string)
     (clojure.core/eval)))
+
+(defn size [prog]
+  (cond
+    (= 0 prog) 1
+    (= 1 prog) 1
+    (symbol? prog) 1
+    (list? prog) (condp = (first prog)
+                   'lambda (inc (size (nth prog 2)))
+                   (apply + 1 (map size (rest prog))))))
