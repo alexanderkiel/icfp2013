@@ -1,4 +1,5 @@
 (ns icfp2013.program
+  (:require [icfp2013.util :refer (bit-count)])
   (:import [icfp2013.generator ProgramGenerator]
            [icfp2013.generator.syntax Operators]
            [java.util Random])
@@ -46,3 +47,14 @@
     (list? prog) (condp = (first prog)
                    'lambda (inc (size (nth prog 2)))
                    (apply + 1 (map size (rest prog))))))
+
+(defn fit
+  "Calculates the fitness of the program in respect to inputs and outputs.
+
+   The fitness is a value between 0 and 1."
+  [program inputs outputs]
+  {:pre [(= (count inputs) (count outputs))]}
+  (let [p-outputs (map program inputs)
+        different-bits (map bit-xor outputs p-outputs)
+        different-bit-count (reduce + (map bit-count different-bits))]
+    (- 1 (/ different-bit-count (* 64 (count outputs))))))
