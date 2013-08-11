@@ -23,21 +23,10 @@
     {:prog prog
      :fit fit}))
 
-(defn gen-and-guess [id operators size inputs outputs]
+(defn solve-rand [id size operators inputs outputs]
   (let [progs (repeatedly #(gen-and-fit operators size inputs outputs))
         win-prog (.toString (:prog (first (drop-while #(> 1 (:fit %1)) progs))))]
     (assoc (c/guess id win-prog) :win-prog win-prog)))
-
-(defn solve-rand [id size operators inputs outputs]
-  (merge {:id id}
-    (loop [inputs inputs
-           outputs outputs]
-      (let [result (gen-and-guess id operators size inputs outputs)]
-        (if-let [values (:values result)]
-          (do
-            (println values)
-            (recur (conj inputs (:input values)) (conj outputs (:output-challenge values))))
-          result)))))
 
 (defn energy [s inputs outputs]
   (float (- 1 (p/fit (eval s) inputs outputs))))
@@ -72,6 +61,12 @@
     (= 4 (count node))
     (= 'if0 (first node))))
 
+(defn fold-node? [node]
+  (clojure.core/and
+    (seq? node)
+    (= 4 (count node))
+    (= 'fold (first node))))
+
 (defn rand?
   "Returns true with probability p."
   [p]
@@ -102,11 +97,15 @@
 (defn mutate-if0 [n]
   (conj (map (partial nth n) (rand-nth perm-3)) 'if0))
 
+(defn mutate-fold [n]
+  (list 'fold (nth n 2) (nth n 1) (nth n 3)))
+
 (defn mutate-list [n]
   (if (rand? 0.2)
     (cond
       (op2-node? n) (list (first n) (nth n 2) (nth n 1))
       (if0-node? n) (mutate-if0 n)
+      (fold-node? n) (mutate-fold n)
       :else n)
     n))
 
@@ -130,7 +129,7 @@
   "Returns a neighbour of prog possibly using vars."
   ([prog] (neighbour (hash-set) prog))
   ([vars prog]
-;        (println {:vars vars :prog prog})
+;    (println {:vars vars :prog prog})
     (let [descend (partial neighbour (union vars (find-vars prog)))
           inner (if (arg-list? prog) identity descend)]
       (walk inner identity (mutate-node vars prog)))))
@@ -141,32 +140,39 @@
     (Math/exp (* -1 (/ (- e1 e) t)))))
 
 (defn sa [operators size inputs outputs]
-  (loop [s (p/read (p/gen (vec operators) size))
+  (loop [s (p/read (p/gen (vec operators) (+ size (rand 4))))
          e (energy s inputs outputs)
-         t 0.1]
-    (if (clojure.core/or (= e 0.0) (< t 0.01))
-      [s e]
+         t 0.2
+         k 0]
+    (if (clojure.core/or (= e 0.0) (< t 0.001))
+      [s e k]
       (let [s1 (neighbour s)
             e1 (energy s1 inputs outputs)
             p (p e e1 t)]
-        (printf "e: %1.4f e1: %1.4f t: %3.2f p: %1.2f s: %s s1: %s%n" e e1 t p s s1)
+;        (printf "e: %1.4f e1: %1.4f t: %3.2f p: %1.2f s: %s s1: %s%n" e e1 t p s s1)
         (if (rand? p)
-          (recur s1 e1 (* t 0.999))
-          (recur s e (* t 0.999)))))))
+          (recur s1 e1 (* t 0.99) (inc k))
+          (recur s e (* t 0.99) (inc k)))))))
 
 (defn solve-sa
   "Simulated annealing solver."
   [id size operators inputs outputs]
-  (loop [[prog e] (sa operators size inputs outputs)]
-    (println (format "e: %1.4f prog: %s" e prog))
+  (loop [[prog e k] (sa operators size inputs outputs)]
+    (println (format "e: %1.4f k: %d prog: %s" e k prog))
     (if (= 0.0 e)
-      (c/guess id (pr-str prog))
+      (assoc (c/guess id (pr-str prog)) :prog (pr-str prog))
       (recur (sa operators size inputs outputs)))))
 
 (defn solve [{:keys [id size operators]} solver inputs]
-  (let [operators (->> operators (map (partial symbol "p")) (map eval))
-        outputs (c/eval id inputs)]
-    (solver id size operators inputs outputs)))
+  (let [operators (->> operators (map (partial symbol "p")) (map eval))]
+    (loop [inputs inputs
+           outputs (c/eval id inputs)]
+      (let [result (solver id size operators inputs outputs)]
+        (if-let [values (:values result)]
+          (do
+            (println values)
+            (recur (conj inputs (:input values)) (conj outputs (:output-challenge values))))
+          result)))))
 
 (defn train
   ([size inputs]

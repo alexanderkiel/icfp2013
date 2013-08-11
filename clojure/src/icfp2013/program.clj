@@ -40,7 +40,6 @@
     (clojure.core/eval)))
 
 (defn size [prog]
-  (println "size prog:" prog)
   (cond
     (= 0 prog) 1
     (= 1 prog) 1
