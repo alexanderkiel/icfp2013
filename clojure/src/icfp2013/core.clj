@@ -46,18 +46,17 @@
 (def op2? (apply hash-set op2s))
 
 (defn mutate-op1 [op]
-  (let [new-op (if (< (rand) 0.5) (rand-nth op1s) op)]
-    (if (= op new-op)
-      op
-      (with-meta new-op {:changed true}))))
+  (if (< (rand) 0.3)
+    (rand-nth op1s)
+    op))
 
 (defn mutate-op2 [op]
-  (if (< (rand) 0.5)
+  (if (< (rand) 0.3)
     (rand-nth op2s)
     op))
 
 (defn mutate-const [c]
-  (if (< (rand) 0.2)
+  (if (< (rand) 0.4)
     (if (= 0 c) 1 0)
     c))
 
@@ -69,7 +68,6 @@
       n)))
 
 (defn mutate-node [n]
-  (println n)
   (cond
     (list? n) (mutate-list n)
     (op1? n) (mutate-op1 n)
@@ -78,31 +76,33 @@
     :else n))
 
 (defn neighbour [s]
-  (postwalk mutate-node s))
+  (prewalk mutate-node s))
 
 (defn p [e e1 t]
   (if (< e1 e)
-    1
+    1.0
     (Math/exp (* -1 (/ (- e1 e) t)))))
 
-(defn t [t0 k]
-  (* t0 (Math/pow 0.95 k)))
+(defn sa [operators size inputs outputs]
+  (loop [s (p/read (p/gen (vec operators) size))
+         e (energy s inputs outputs)
+         t 10000.0]
+    (if (= e 0.0)
+      s
+      (let [s1 (neighbour s)
+            e1 (energy s1 inputs outputs)
+            p (p e e1 t)]
+        (printf "e: %1.4f t: %3.2f p: %1.2f s: %s%n" e t p s)
+        (if (> p (rand))
+          (recur s1 e1 (* t 0.99))
+          (recur s e (* t 0.99)))))))
 
 (defn solve-sa
   "Simulated annealing solver."
   [id size operators inputs outputs]
-  (loop [s (p/read (p/gen (vec operators) size))
-         e (energy s inputs outputs)
-         k 1]
-    (if (clojure.core/or (= k 30) (= e 0))
-      s
-      (let [t (t 100 k)]
-        (printf "e: %1.4f t: %3.2f s: %s%n" e t s)
-        (let [s1 (neighbour s)
-              e1 (energy s1 inputs outputs)]
-          (if (> (p e e1 t) (Math/random))
-            (recur s1 e1 (inc k))
-            (recur s e (inc k))))))))
+  (let [prog (sa operators size inputs outputs)]
+    (println "prog:" prog)
+    (c/guess id (pr-str prog))))
 
 (defn solve [{:keys [id size operators]} solver inputs]
   (let [operators (->> operators (map (partial symbol "p")) (map eval))
