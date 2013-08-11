@@ -40,13 +40,15 @@
     (clojure.core/eval)))
 
 (defn size [prog]
+  (println "size prog:" prog)
   (cond
     (= 0 prog) 1
     (= 1 prog) 1
     (symbol? prog) 1
-    (list? prog) (condp = (first prog)
+    (seq? prog) (condp = (first prog)
                    'lambda (inc (size (nth prog 2)))
-                   (apply + 1 (map size (rest prog))))))
+                   (apply + 1 (map size (rest prog))))
+    :else (throw (IllegalArgumentException. (pr-str {:prog prog :type (type prog)})))))
 
 (defn fit
   "Calculates the fitness of the program in respect to inputs and outputs.

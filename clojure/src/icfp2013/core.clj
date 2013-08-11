@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [clojure.pprint :refer (pprint)]
             [clojure.repl :refer (pst)]
+            [clojure.math.combinatorics :refer (permutations)]
             [clojure.set :refer (union)]
             [clojure.walk :refer (walk prewalk postwalk)]
             [icfp2013.util :refer (to-hex to-bin from-hex gen-inputs)]
@@ -11,7 +12,7 @@
             [icfp2013.program :as p]
             [icfp2013.eval :as eval :refer (not shl1 shr1 shr4 shr16
                                              or and xor plus if0 lambda fold)])
-  (:refer-clojure :exclude [not or and]))
+  (:refer-clojure :exclude [not or and var?]))
 
 (def inputs (gen-inputs))
 
@@ -45,58 +46,77 @@
 (def op1? (apply hash-set op1s))
 (def op2s ['and 'or 'xor 'plus])
 (def op2? (apply hash-set op2s))
+(def special ['lambda 'if0 'fold])
+(def all-symbols (union (set op1s) (set op2s) (set special)))
 
 (defn lambda? [node]
-  (clojure.core/and (list? node) (= 'lambda (first node))))
+  (clojure.core/and (seq? node) (= 'lambda (first node))))
+
+(defn var? [n]
+  (clojure.core/not (all-symbols n)))
 
 (defn arg-list?
   "Returns true iff the node is a lambda arg list."
   [node]
-  (clojure.core/and
-    (list? node)
-    (clojure.core/not (clojure.core/or
-                        (op1? (first node))
-                        (op2? (first node))
-                        (= 'lambda (first node))))))
+  (clojure.core/and (seq? node) (var? (first node))))
 
 (defn op2-node? [node]
   (clojure.core/and
-    (list? node)
+    (seq? node)
     (= 3 (count node))
     (clojure.core/not (lambda? node))))
 
+(defn if0-node? [node]
+  (clojure.core/and
+    (seq? node)
+    (= 4 (count node))
+    (= 'if0 (first node))))
+
+(defn rand?
+  "Returns true with probability p."
+  [p]
+  (> p (rand)))
+
 (defn mutate-op1 [op]
-  (if (< (rand) 0.3)
+  (if (rand? 0.3)
     (rand-nth op1s)
     op))
 
 (defn mutate-op2 [op]
-  (if (< (rand) 0.3)
+  (if (rand? 0.3)
     (rand-nth op2s)
     op))
 
 (defn mutate-const [vars c]
-  (if (< (rand) 0.4)
+  (if (rand? 0.4)
     (rand-nth (conj (vec vars) 0 1))
     c))
 
 (defn mutate-var [vars v]
-  (if (< (rand) 0.2)
+  (if (rand? 0.2)
     (rand-nth (conj (vec vars) 0 1))
     v))
 
+(def perm-3 (vec (permutations [1 2 3])))
+
+(defn mutate-if0 [n]
+  (conj (map (partial nth n) (rand-nth perm-3)) 'if0))
+
 (defn mutate-list [n]
-  (if (clojure.core/and (< (rand) 0.2) (op2-node? n))
-    (list (first n) (nth n 2) (nth n 1))
+  (if (rand? 0.2)
+    (cond
+      (op2-node? n) (list (first n) (nth n 2) (nth n 1))
+      (if0-node? n) (mutate-if0 n)
+      :else n)
     n))
 
 (defn mutate-node [vars n]
   (cond
-    (list? n) (mutate-list n)
+    (seq? n) (mutate-list n)
     (op1? n) (mutate-op1 n)
     (op2? n) (mutate-op2 n)
     (#{0 1} n) (mutate-const vars n)
-    (not= 'lambda n) (mutate-var vars n)
+    (var? n) (mutate-var vars n)
     :else n))
 
 (defn find-vars
@@ -110,7 +130,7 @@
   "Returns a neighbour of prog possibly using vars."
   ([prog] (neighbour (hash-set) prog))
   ([vars prog]
-;    (println {:vars vars :prog prog})
+;        (println {:vars vars :prog prog})
     (let [descend (partial neighbour (union vars (find-vars prog)))
           inner (if (arg-list? prog) identity descend)]
       (walk inner identity (mutate-node vars prog)))))
@@ -124,13 +144,13 @@
   (loop [s (p/read (p/gen (vec operators) size))
          e (energy s inputs outputs)
          t 0.1]
-    (if (clojure.core/or (= e 0.0) (< t 0.001))
+    (if (clojure.core/or (= e 0.0) (< t 0.01))
       [s e]
       (let [s1 (neighbour s)
             e1 (energy s1 inputs outputs)
             p (p e e1 t)]
-        (printf "e: %1.4f e1: %1.4f t: %3.2f p: %1.2f s: %s%n" e e1 t p s)
-        (if (> p (rand))
+        (printf "e: %1.4f e1: %1.4f t: %3.2f p: %1.2f s: %s s1: %s%n" e e1 t p s s1)
+        (if (rand? p)
           (recur s1 e1 (* t 0.999))
           (recur s e (* t 0.999)))))))
 
@@ -138,7 +158,7 @@
   "Simulated annealing solver."
   [id size operators inputs outputs]
   (loop [[prog e] (sa operators size inputs outputs)]
-    (println "prog:" prog)
+    (println (format "e: %1.4f prog: %s" e prog))
     (if (= 0.0 e)
       (c/guess id (pr-str prog))
       (recur (sa operators size inputs outputs)))))
