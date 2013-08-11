@@ -28,7 +28,7 @@
     (first (sort-by second sas))))
 
 (defn solve-rand [id size operators inputs outputs]
-  (let [progs (repeatedly #(pgen-and-fit operators size inputs outputs))
+  (let [progs (repeatedly #(gen-and-fit operators size inputs outputs))
         win-prog (.toString (:prog (first (drop-while #(> 1 (:fit %1)) progs))))]
     (assoc (c/guess id win-prog) :win-prog win-prog)))
 
