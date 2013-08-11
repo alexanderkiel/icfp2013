@@ -1,5 +1,6 @@
 (ns icfp2013.problems
-  (:require [icfp2013.client :as c]))
+  (:require [clojure.set :refer (intersection)]
+            [icfp2013.client :as c]))
 
 (def problems c/problems)
 
@@ -10,11 +11,15 @@
 (defn wasted? [{:keys [solved timeLeft]}]
   (and (not solved) (= 0 timeLeft)))
 
-(defn w-size [size]
-  (->> (problems)
-    (filter open?)
-    (filter #(= (:size %1) size))
-    (sort-by :id)))
+(defn w-size
+  ([size] (w-size size []))
+  ([size skip-ops]
+    {:pre [(number? size) (sequential? skip-ops)]}
+    (->> (problems)
+      (filter open?)
+      (filter #(= (:size %) size))
+      (filter #(empty? (intersection (set skip-ops) (set (:operators %)))))
+      (sort-by :id ))))
 
 (defn all-wasted []
   (->> (problems)
