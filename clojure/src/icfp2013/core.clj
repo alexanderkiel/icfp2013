@@ -154,14 +154,18 @@
           (recur s1 e1 (* t 0.99) (inc k))
           (recur s e (* t 0.99) (inc k)))))))
 
+(defn psa [operators size inputs outputs]
+  (let [sas (pmap (fn [_] (sa operators size inputs outputs)) (range 0 4))]
+    (first (sort-by second sas))))
+
 (defn solve-sa
   "Simulated annealing solver."
   [id size operators inputs outputs]
-  (loop [[prog e k] (sa operators size inputs outputs)]
+  (loop [[prog e k] (psa operators size inputs outputs)]
     (println (format "e: %1.4f k: %d prog: %s" e k prog))
     (if (= 0.0 e)
       (assoc (c/guess id (pr-str prog)) :prog (pr-str prog))
-      (recur (sa operators size inputs outputs)))))
+      (recur (psa operators size inputs outputs)))))
 
 (defn solve [{:keys [id size operators]} solver inputs]
   (let [operators (->> operators (map (partial symbol "p")) (map eval))]
