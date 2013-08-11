@@ -1,6 +1,7 @@
 package icfp2013.generator;
 
 import icfp2013.generator.syntax.Program;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Random;
@@ -55,21 +56,15 @@ public class ProgramGeneratorTest {
         assertEquals(size, p.size());
     }
 
+    @Ignore("is unlikely ever to succeed without a really heavy algorithm")
     @Test
     public void testOnlyIf() throws Exception {
-        int size = 100, min = 9999999, max = -1;
+        int size = 100;
         ProgramGenerator generator = new ProgramGenerator(newArrayList(IF0), size);
 
-        for (int i = 0; i < 1000; i++) {
-            Program p = generator.apply(new Random(i * i));
-            int size1 = p.size();
-            min = Math.min(min, size1);
-            max = Math.max(max, size1);
+        Program program = generator.apply(new Random());
 
-        }
-
-        System.out.println("min: " + min);
-        System.out.println("max: " + max);
-//        assertEquals(size, p.size());
+        assertEquals(size, program.size());
+        System.out.println(program);
     }
 }

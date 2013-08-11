@@ -43,13 +43,12 @@ public class ProgramGenerator implements Function<Random, Program> {
 
     @Override
     public Program apply(Random rng) {
-
         return new InternalGenerator(rng, allowedOperators, size).generateProgram();
     }
 
     private static class InternalGenerator {
 
-        public static final Function<Operators, Integer> OPERATORS_MINIMAL_SIZE_FUNCTION = new Function<Operators, Integer>() {
+        public static final Function<Operators, Integer> OPERATORS_MINIMAL_SIZE = new Function<Operators, Integer>() {
             @Override
             public Integer apply(Operators input) {
                 return input.minimumSize;
@@ -72,11 +71,11 @@ public class ProgramGenerator implements Function<Random, Program> {
             if (stillAllowedOperators.contains(Operators.TFOLD)) {
                 return program(var, tFold(size - 1, var));
             } else {
-                return program(var, generateProgramExpression(size - 1, singletonList(var)));
+                return program(var, recursiveExpression(size - 1, singletonList(var)));
             }
         }
 
-        private Expression generateProgramExpression(int remainingSize, List<Variable> availableVariables) {
+        private Expression recursiveExpression(int remainingSize, List<Variable> availableVariables) {
             if (remainingSize < minimumOperatorsMinSize()) {
                 return createMinSizeExpression(availableVariables);
             } else {
@@ -85,7 +84,7 @@ public class ProgramGenerator implements Function<Random, Program> {
         }
 
         private Integer minimumOperatorsMinSize() {
-            return min(transform(stillAllowedOperators, OPERATORS_MINIMAL_SIZE_FUNCTION));
+            return min(transform(stillAllowedOperators, OPERATORS_MINIMAL_SIZE));
         }
 
         private Expression createMinSizeExpression(List<Variable> availableVariables) {
@@ -96,39 +95,34 @@ public class ProgramGenerator implements Function<Random, Program> {
         }
 
         private Expression unary(Operators op, int remainingSize, List<Variable> availableVariables) {
-            return new Unary(op, generateProgramExpression(remainingSize, availableVariables));
+            return new Unary(op, recursiveExpression(remainingSize, availableVariables));
         }
 
         private Expression binary(Operators op, int remainingSize, List<Variable> availableVariables) {
-            int firstBranchSize = nextRndInt(remainingSize - 2) + 1;
+            List<Integer> branchSizes = randomizeBranchSizes(2, remainingSize);
             return new Binary(op,
-                    generateProgramExpression(firstBranchSize, availableVariables),
-                    generateProgramExpression(remainingSize - firstBranchSize, availableVariables));
+                    recursiveExpression(branchSizes.get(0), availableVariables),
+                    recursiveExpression(branchSizes.get(1), availableVariables));
         }
 
         private Expression if0(int remainingSize, List<Variable> availableVariables) {
-            int firstBranchSize = nextRndInt(remainingSize - 3) + 1;
-            int secondBranchSize = nextRndInt(remainingSize - firstBranchSize - 2) + 1;
-            int thirdBranchSize = remainingSize - (firstBranchSize + secondBranchSize);
+            List<Integer> branchSizes = randomizeBranchSizes(3, remainingSize);
 
-            return new If(generateProgramExpression(firstBranchSize, availableVariables),
-                    generateProgramExpression(secondBranchSize, availableVariables),
-                    generateProgramExpression(thirdBranchSize, availableVariables));
+            return new If(recursiveExpression(branchSizes.get(0), availableVariables),
+                    recursiveExpression(branchSizes.get(1), availableVariables),
+                    recursiveExpression(branchSizes.get(2), availableVariables));
         }
 
         private Expression fold(int remainingSize, List<Variable> availableVariables) {
             Variable x = var("x_" + varCounter++), y = var("x_" + varCounter++);
-            int firstBranchSize = nextRndInt(remainingSize - 3) + 1;
-            int secondBranchSize = nextRndInt(remainingSize - firstBranchSize - 2) + 1;
-            int thirdBranchSize = remainingSize - (firstBranchSize + secondBranchSize);
-
+            List<Integer> branchSizes = randomizeBranchSizes(3, remainingSize);
 
             stillAllowedOperators.remove(FOLD);
             return new Fold(
-                    generateProgramExpression(firstBranchSize, availableVariables),
-                    generateProgramExpression(secondBranchSize, availableVariables),
+                    recursiveExpression(branchSizes.get(0), availableVariables),
+                    recursiveExpression(branchSizes.get(1), availableVariables),
                     x, y,
-                    generateProgramExpression(thirdBranchSize, availableVariables));
+                    recursiveExpression(branchSizes.get(2), availableVariables));
         }
 
         private Expression tFold(int remainingSize, Variable x) {
@@ -137,7 +131,21 @@ public class ProgramGenerator implements Function<Random, Program> {
 
             stillAllowedOperators.remove(TFOLD);
             return new Fold(x, Expressions.c0(), xNew, y,
-                    generateProgramExpression(remainingSize - 4, newArrayList(xNew, y)));
+                    recursiveExpression(remainingSize - 4, newArrayList(xNew, y)));
+        }
+
+        private List<Integer> randomizeBranchSizes(int numBranches, int remainingSize) {
+            List<Integer> branchSizes = newArrayList();
+            for (int i = 0; i < numBranches - 1; i++) {
+                int branchSize;
+                do {
+                    branchSize = nextRndInt(remainingSize - (numBranches - i)) + 1;
+                } while (transform(stillAllowedOperators, OPERATORS_MINIMAL_SIZE).contains(branchSize));
+                branchSizes.add(branchSize);
+                remainingSize -= branchSize;
+            }
+            branchSizes.add(remainingSize);
+            return branchSizes;
         }
 
         private Expression createExpression(int remainingSize, List<Variable> availableVariables, Operators op) {
