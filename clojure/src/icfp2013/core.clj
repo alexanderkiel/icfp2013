@@ -105,7 +105,7 @@
   (list 'fold (nth n 2) (nth n 1) (nth n 3)))
 
 (defn mutate-list [n]
-  (if (rand? 0.2)
+  (if (rand? 0.8)
     (cond
       (op2-node? n) (list (first n) (nth n 2) (nth n 1))
       (if0-node? n) (mutate-if0 n)
@@ -133,7 +133,7 @@
   "Returns a neighbour of prog possibly using vars."
   ([prog] (neighbour (hash-set) prog))
   ([vars prog]
-;    (println {:vars vars :prog prog})
+    ;    (println {:vars vars :prog prog})
     (let [descend (partial neighbour (union vars (find-vars prog)))
           inner (if (arg-list? prog) identity descend)]
       (walk inner identity (mutate-node vars prog)))))
@@ -144,29 +144,31 @@
     (Math/exp (* -1 (/ (- e1 e) t)))))
 
 (defn sa [operators size inputs outputs]
-  (loop [s (p/read (p/gen (vec operators) (+ size (rand 4))))
+  (loop [s (p/read (p/gen (vec operators) (+ size (rand 6))))
          e (energy s inputs outputs)
-         t 0.2
+         t 0.6
          k 0]
-    (if (clojure.core/or (= e 0.0) (< t 0.001))
+    (if (clojure.core/or (= e 0.0) (< t 0.00001))
       [s e k]
       (let [s1 (neighbour s)
             e1 (energy s1 inputs outputs)
             p (p e e1 t)]
-;        (printf "e: %1.4f e1: %1.4f t: %3.2f p: %1.2f s: %s s1: %s%n" e e1 t p s s1)
+        ;        (printf "e: %1.4f e1: %1.4f t: %3.2f p: %1.2f s: %s s1: %s%n" e e1 t p s s1)
         (if (rand? p)
           (recur s1 e1 (* t 0.99) (inc k))
           (recur s e (* t 0.99) (inc k)))))))
 
 (defn psa [operators size inputs outputs]
-  (let [sas (pmap (fn [_] (sa operators size inputs outputs)) (range 0 4))]
-    (first (sort-by second sas))))
+  (let [begin-time (System/currentTimeMillis)
+        sas (doall (pmap (fn [_] (sa operators size inputs outputs)) (range 0 4)))
+        end-time (System/currentTimeMillis)]
+    (conj (first (sort-by second sas)) (- end-time begin-time))))
 
 (defn solve-sa
   "Simulated annealing solver."
   [id size operators inputs outputs]
-  (loop [[prog e k] (psa operators size inputs outputs)]
-    (println (format "e: %1.4f k: %d prog: %s" e k prog))
+  (loop [[prog e k dur] (psa operators size inputs outputs)]
+    (println (format "e: %1.4f k: %d dur: %d prog: %s" e k dur prog))
     (if (= 0.0 e)
       (assoc (c/guess id (pr-str prog)) :prog (pr-str prog))
       (recur (psa operators size inputs outputs)))))
