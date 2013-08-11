@@ -7,4 +7,4 @@
                  [slingshot "0.10.3"]
                  [icfp2013/generator "0.1-SNAPSHOT"]]
   :main icfp2013.core
-  :jvm-opts ["-Xmx2g" "-server"] )
+  :jvm-opts ["-Xmx2g" "-server" "-XX:MaxPermSize" "300m"])

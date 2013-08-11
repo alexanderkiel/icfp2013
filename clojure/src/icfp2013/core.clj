@@ -17,7 +17,7 @@
 (def inputs (gen-inputs))
 
 (defn gen-and-fit [operators size inputs outputs]
-  (let [prog (p/gen (vec operators) size)
+  (let [prog (p/gen (vec operators) (+ size (rand 4)))
         fit (p/fit (p/eval prog) inputs outputs)]
     (println "fit:" (format "%1.4f" (float fit)) "prog:" (.toString prog))
     {:prog prog
