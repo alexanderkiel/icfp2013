@@ -92,7 +92,7 @@
     c))
 
 (defn mutate-var [vars v]
-  (if (rand? 0.2)
+  (if (rand? 0.4)
     (rand-nth (conj (vec vars) 0 1))
     v))
 
@@ -144,11 +144,11 @@
     (Math/exp (* -1 (/ (- e1 e) t)))))
 
 (defn sa [operators size inputs outputs]
-  (loop [s (p/read (p/gen (vec operators) (+ size (rand 6))))
+  (loop [s (p/read (p/gen (vec operators) (+ size (rand 4))))
          e (energy s inputs outputs)
          t 0.6
          k 0]
-    (if (clojure.core/or (= e 0.0) (< t 0.00001))
+    (if (clojure.core/or (= e 0.0) (< t 0.000001))
       [s e k]
       (let [s1 (neighbour s)
             e1 (energy s1 inputs outputs)
@@ -168,13 +168,14 @@
   "Simulated annealing solver."
   [id size operators inputs outputs]
   (loop [[prog e k dur] (psa operators size inputs outputs)]
-    (println (format "e: %1.4f k: %d dur: %d prog: %s" e k dur prog))
+    (println (format "e: %1.5f k: %d dur: %d prog: %s" e k dur prog))
     (if (= 0.0 e)
       (assoc (c/guess id (pr-str prog)) :prog (pr-str prog))
       (recur (psa operators size inputs outputs)))))
 
 (defn solve [{:keys [id size operators]} solver inputs]
-  (let [operators (->> operators (map (partial symbol "p")) (map eval))]
+  (println "Solve prob with id:" id)
+  (let [operators (->> operators (filter #(not= "bonus" %)) (map (partial symbol "p")) (map eval))]
     (loop [inputs inputs
            outputs (c/eval id inputs)]
       (let [result (solver id size operators inputs outputs)]
@@ -191,3 +192,6 @@
     (let [train-result (c/train size operators)]
       (println "challenge:" (:challenge train-result) "id:" (:id train-result))
       (solve train-result solver inputs))))
+
+(defn s [id]
+  (-> (problems/w-id id) (solve solve-sa inputs) pprint))
